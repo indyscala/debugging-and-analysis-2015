@@ -1,63 +1,123 @@
-% title: Title of my presentation
-% subtitle: And a subtitle
-% author: Firstname Lastname
-% author: Other info to put on the author line
-% thankyou: Thanks everyone!
-% thankyou_details: And especially these people:
-% contact: <span>www</span> <a href="http://www.google.edu/">website</a>
-% contact: <span>github</span> <a href="http://github.com">username</a>
-% favicon: http://www.stanford.edu/favicon.ico
+% title: Debugging and Perf Analysis
+% subtitle: Tools for Development and Production
+% author: Brad Fritz
+% author: bfritz on {twitter,github,freenode}
 
 ---
-title: Intro slide
+title: Debugging and Perf Analysis
 build_lists: true
 
-Here is a list that should build:
+Let's narrow it down...
 
-- I like formulas, like this one $e=mc^2$
-- It's rendered using MathJax. You can change the settings by editing base.html if you like
-- pressing 'f' toggle fullscreen
-- pressing 'w' toggles widescreen
-- 'o' toggles overview mode
+- Tools I've used
+- ...or wanted to use.
+- Free
 
 ---
-title: Slide with a figure
-subtitle: Subtitles are cool too
-class: img-top-center
+title: Share!
 
-<img height=150 src=figures/200px-6n-graf.svg.png />
-
-- Some point to make about about this figure from wikipedia
-- This slide has a class that was defined in theme/css/custom.css
-
-<footer class="source"> Always cite your sources! </footer>
+Your experiences are more interesting than my slides and simple demos.
 
 ---
-title: Segue slide
-subtitle: I can haz subtitlz?
-class: segue dark nobackground
+title: On My List - Development
+build_lists: true
+
+- logging, e.g. `println()` or [log4s](http://log4s.org/)
+- REPL, e.g. `scala` or `sbt console`
+- debugger and breakpoints, e.g. [IntelliJ IDEA](https://www.jetbrains.com/idea/)
+- JVM profiler, e.g. [VisualVM](http://visualvm.java.net/)
 
 ---
-title: Maybe some code?
+title: On My List - Production
+build_lists: true
 
-press 'h' to highlight an important section (that is highlighted
-with &lt;b&gt;...&lt;/b&gt; tags)
+- logging ***with structure***, e.g. [log4s](http://log4s.org/) with JSON output
+    - [log4j jsonevent layout](https://github.com/logstash/log4j-jsonevent-layout)
+    - [logback JSON encoder](https://github.com/logstash/logstash-logback-encoder)
+    - [mapped diagnostic contexts](http://www.slf4j.org/manual.html#mdc)
+- application metrics, e.g. [dropwizard-metrics](http://metrics.dropwizard.io/3.1.0/)
+- low-overhead CPU profiling, e.g. [perf_events](http://www.brendangregg.com/linuxperf.html) and [flame graphs](http://www.brendangregg.com/flamegraphs.html)
+    - [Netflix Vector](https://github.com/Netflix/vector)
+- cluster-wide profiling, e.g. [Etsy's statsd-jvm-profiler](https://github.com/etsy/statsd-jvm-profiler)
 
-<pre class="prettyprint" data-lang="javascript">
-function isSmall() {
-  return window.matchMedia("(min-device-width: ???)").matches;
-}
+---
+title: Logging
 
-<b>function hasTouch() {
-  return Modernizr.touch;
-}</b>
+Ever done this?
 
-function detectFormFactor() {
-  var device = DESKTOP;
-  if (hasTouch()) {
-    device = isSmall() ? PHONE : TABLET;
-  }
-  return device;
+<pre class="prettyprint" data-lang="scala">
+println("HERE: 1")
+if (cond) {
+  println("HERE: 2")
+  // huh, why isn't this running?
+  // code, code, code
 }
 </pre>
+
+For many cases, this is probably better...
+
+<pre class="prettyprint" data-lang="scala">
+logger.info(s"Created order $orderId.")
+if (cond) {
+  logger.debug(s"Handlng order $orderId as urgent.")
+  // huh, why isn't this running?
+  // code, code, code
+}
+</pre>
+
+---
+title: Logging - Mapped Diagnostic Context
+
+And sometimes this makes more sense, especially with structured
+logging in production.
+
+<pre class="prettyprint" data-lang="scala">
+val requestId = java.util.UUID.randomUUID
+
+MDC.withCtx ("request-id" -> requestId.toString, "request-user" -> user) {
+  validateOrderRequest(req)
+  val orderId = nextId()
+
+  MDC.withCtx ("order-id" -> orderId) {
+    logger.info(s"Created order $orderId.")
+
+    if (cond) {
+      logger.debug(s"Handlng order $orderId as urgent.")
+    }
+  }
+}
+</pre>
+
+---
+title: REPL
+
+Sometimes its easiest/fastest to type `scala` or `sbt console`,
+paste in a block of code, and watch what happens.
+
+---
+title: Debugger
+
+<pre class="prettyprint" data-lang="scala">
+println(s"HERE (X)      : $x")
+println(s"HERE (X.count): $x.count")
+println(s"HERE (X.sum   : $x.sum")
+</pre>
+
+Might be time to reach for the debugger.
+
+---
+title: Profiler
+
+Signs you might want to reach for a profiler...
+
+- Notebook fan just kicked on and the room feels warmer.
+- App worked great...until it blocked all activity for 30 seconds.
+- The HDD LED has been glowing non-stop since the app started.
+
+---
+title: Thanks!
+
+Slides and code will be published at:
+
+[https://github.com/indyscala/debugging-and-analysis-2015](https://github.com/indyscala/debugging-and-analysis-2015)
 
