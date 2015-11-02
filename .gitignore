@@ -1,3 +1,8 @@
 .venv/
 slides/index.html
 target/
+
+flamegraph-*.svg
+libperfmap.so
+perf.data
+perf.data.old
