@@ -4,14 +4,15 @@
 % author: bfritz on {twitter,github,freenode}
 
 ---
-title: Debugging and Perf Analysis
+title: Debugging and Performance Analysis
 build_lists: true
 
 Let's narrow it down...
 
 - Tools I've used
-- ...or wanted to use.
-- Free
+- ...or wanted to use
+- ...or randomly found on the Internet.
+- Bias towards Open Source.
 
 ---
 title: Share!
