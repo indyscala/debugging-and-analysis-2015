@@ -1,5 +1,6 @@
 package org.indyscala.dpa
 
+import java.security.SecureRandom
 import java.util.Random
 
 class GenerateRandomNumbers extends UnitSpec {
@@ -8,7 +9,8 @@ class GenerateRandomNumbers extends UnitSpec {
     // wait for socket connection before proceeding; timeout after 20s
     waitForConnection(20)
 
-    val r = new Random()
+    // val r: Random = new Random()
+    val r: Random = SecureRandom.getInstance("SHA1PRNG");
     var (elapsedMs, count, countSmall) = (0L, 0L, 0L)
     val started = System.currentTimeMillis()
     while (elapsedMs < 10000) {
