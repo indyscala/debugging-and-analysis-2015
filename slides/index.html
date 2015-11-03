@@ -1,0 +1,417 @@
+<!--
+slidedeck: A modification of the Google IO 2012 HTML5 slide template
+URL: https://github.com/rmcgibbo/slidedeck
+
+Based on https://github.com/francescolaffi/elastic-google-io-slides, and
+ultimately:
+
+Google IO 2012 HTML5 Slide Template
+Authors: Eric Bidelman <ebidel@gmail.com>
+         Luke Mahe <lukem@google.com>
+URL: https://code.google.com/p/io-2012-slides
+-->
+<!DOCTYPE html>
+<html>
+<head>
+  <title> Debugging and Perf Analysis</title>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">-->
+  <!--<meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+  <!--This one seems to work all the time, but really small on ipad-->
+  <!--<meta name="viewport" content="initial-scale=0.4">-->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  
+  <link rel="stylesheet" media="all" href="theme/css/default.css">
+  <link rel="stylesheet" media="all" href="theme/css/custom.css">
+  <link rel="stylesheet" media="only screen and (max-device-width: 480px)" href="theme/css/phone.css">
+  <base target="_blank"> <!-- This amazingness opens all links in a new tab. -->
+  <script data-main="js/slides", src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.14/require.min.js"></script>
+
+
+  <!-- MathJax support  -->
+  <script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+    extensions: ["tex2jax.js"],
+    jax: ["input/TeX", "output/HTML-CSS"],
+    showProcessingMessages: false,
+    tex2jax: {
+      inlineMath: [ ['$','$'], ["\\(","\\)"] ],
+      displayMath: [ ['$$','$$'], ["\\[","\\]"] ],
+      processEscapes: true
+    },
+    TeX: {
+      extensions: ["color.js"]
+    },
+    "HTML-CSS": { availableFonts: ["TeX"] }
+  });
+  </script>
+  <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+  <div style="display:hidden">
+  \[
+    \definecolor{data}{RGB}{18,110,213}
+    \definecolor{unknown}{RGB}{217,86,16}
+    \definecolor{learned}{RGB}{175,114,176}
+  \]
+  </div>
+
+</head>
+
+<body style="opacity: 0">
+
+<slides class="layout-widescreen">
+<slide class="title-slide segue nobackground">
+  <hgroup class="auto-fadein">
+
+    <h1> Debugging and Perf Analysis</h1>
+    <h2> Tools for Development and Production</h2>
+    <p> Brad Fritz<br/> bfritz on {twitter,github,freenode}</p>
+  </hgroup>
+</slide>
+
+
+<slide  >
+  
+    <hgroup>
+      <h2>Debugging and Performance Analysis</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Let's narrow it down...</p>
+<ul class="build">
+<li>Tools I've used</li>
+<li>...or wanted to use</li>
+<li>...or randomly found on the Internet.</li>
+<li>Bias towards Open Source.</li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Share!</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Your experiences are more interesting than my slides and simple demos.</p></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>On My List - Development</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><ul class="build">
+<li>logging, e.g. <code>println()</code> or <a href="http://log4s.org/">log4s</a></li>
+<li>REPL, e.g. <code>scala</code> or <code>sbt console</code></li>
+<li>debugger and breakpoints, e.g. <a href="https://www.jetbrains.com/idea/">IntelliJ IDEA</a></li>
+<li>JVM profiler, e.g. <a href="http://visualvm.java.net/">VisualVM</a></li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>On My List - Production</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><ul class="build">
+<li>logging <strong><em>with structure</em></strong>, e.g. <a href="http://log4s.org/">log4s</a> with JSON output</li>
+<li>application metrics, e.g. <a href="http://metrics.dropwizard.io/3.1.0/">dropwizard-metrics</a></li>
+<li>system metrics, e.g. <a href="http://collectd.org/">collectd</a>, <a href="http://www.pcp.io/">Peformance Co-Pilot</a> or hundreds of others</li>
+<li>low-overhead CPU profiling, e.g. <a href="http://www.brendangregg.com/linuxperf.html">perf_events</a> with <a href="http://www.brendangregg.com/flamegraphs.html">flame graphs</a> (and <a href="https://github.com/Netflix/vector">Netflix Vector</a>)</li>
+<li>cluster-wide profiling, e.g. <a href="https://github.com/etsy/statsd-jvm-profiler">Etsy's statsd-jvm-profiler</a></li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Development Tools</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Tools most useful in development...</p></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Logging</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Ever done this?</p>
+<pre class="prettyprint" data-lang="scala">
+println("HERE: 1")
+if (cond) {
+  println("HERE: 2")
+  // huh, why isn't this running?
+  // code, code, code
+}
+</pre>
+
+<p>For many cases, this is probably better...</p>
+<pre class="prettyprint" data-lang="scala">
+logger.info(s"Created order $orderId.")
+if (cond) {
+  logger.debug(s"Handlng order $orderId as urgent.")
+  // huh, why isn't this running?
+  // code, code, code
+}
+</pre></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Logging - Mapped Diagnostic Context</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>And sometimes this makes more sense, especially with structured
+logging in production.</p>
+<pre class="prettyprint" data-lang="scala">
+val requestId = java.util.UUID.randomUUID
+
+MDC.withCtx ("request-id" -> requestId.toString, "request-user" -> user) {
+  validateOrderRequest(req)
+  val orderId = nextId()
+
+  MDC.withCtx ("order-id" -> orderId) {
+    logger.info(s"Created order $orderId.")
+
+    if (cond) {
+      logger.debug(s"Handlng order $orderId as urgent.")
+    }
+  }
+}
+</pre></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>REPL</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Sometimes its easiest/fastest to type <code>scala</code> or <code>sbt console</code>,
+paste in a block of code, and watch what happens.</p></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Debugger</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><pre class="prettyprint" data-lang="scala">
+println(s"HERE (X)      : $x")
+println(s"HERE (X.count): $x.count")
+println(s"HERE (X.sum   : $x.sum")
+</pre>
+
+<p>Might be time to reach for the debugger.</p></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Debugging Tips</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><ul class="build">
+<li>
+<p>Download sources and docs for an SBT project:</p>
+<p>sbt update-classifiers</p>
+</li>
+<li>
+<p>Connect jconsole to IntelliJ debugger stopped on breakpoint:</p>
+<p>Right click on breakpoint and "Suspend Thread" instead of "Suspend All".</p>
+<p>Credit to <a href="https://www.rallydev.com/blog/engineering/bite-size-pro-tips-intellij-debugger-and-jconsole">Ryan Scott at Rally</a>.</p>
+</li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Profiler</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Signs you might want to reach for a profiler...</p>
+<ul>
+<li>Notebook fan just kicked on and the room feels warmer.</li>
+<li>App worked great...until it blocked all activity for 30 seconds.</li>
+<li>The HDD LED has been glowing non-stop since the app started.</li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Profiler - VisualVM</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Demo:</p>
+<ul>
+<li>CPU profiling</li>
+<li>thread monitoring</li>
+<li>heap dump and analysis</li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Production Tools</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Tools most useful in production...</p></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Logging</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Even more useful in production than development.</p>
+<ul>
+<li>What was going on when host X threw an <code>OutOfMemoryException</code>?</li>
+<li>Joe ordered 10 of 15 widgets but there are only 4 left in stock.
+  What happened?</li>
+<li>Load just spiked on the reverse proxies.  What are the referrers?</li>
+<li>And a million other questions.</li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Logging - Structure Helps</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p><code>grep</code>, <code>sed</code>, <code>awk</code> and friends are useful but the log data comes to
+life when it is structured and can be easily searched and visualized.</p>
+<ul>
+<li><a href="https://github.com/logstash/log4j-jsonevent-layout">log4j jsonevent layout</a></li>
+<li><a href="https://github.com/logstash/logstash-logback-encoder">logback JSON encoder</a></li>
+<li><a href="http://www.slf4j.org/manual.html#mdc">mapped diagnostic contexts</a></li>
+<li><a href="https://www.elastic.co/products/kibana">Kibana</a> and Elasticsearch</li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Application Metrics</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Many choices.</p>
+<ul>
+<li><a href="http://metrics.dropwizard.io/3.1.0/">dropwizard-metrics</a> is popular.</li>
+<li>So are statsd <a href="https://github.com/etsy/statsd/wiki#client-implementations">clients</a>.</li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>System Metrics</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>I would focus on key app metrics first.</p>
+<p>Probably more choices than app metrics.</p>
+<ul>
+<li>I use <a href="http://collectd.org/">collectd</a> in production without serious complaint.</li>
+<li><a href="http://www.pcp.io/">Peformance Co-Pilot</a> looks interesting.</li>
+<li>A coworker really likes <a href="http://www.zabbix.com/">Zabbix</a>.</li>
+</ul></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Mixed-mode Java Flame Graphs</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Demo</p>
+<p>...but you should really checkout <a href="http://www.brendangregg.com/">Brendan Gregg's</a>
+posts and presentations.  <a href="http://techblog.netflix.com/2015/07/java-in-flames.html">This one</a>
+on Netflix's tech blog is a good place to start for Java flame graphs.</p></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Hadoop^wCluster-wide Profiling</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>If you're running a fleet of machines processing complex workloads...</p>
+<p>Etsy has JVM agent profiler that might be useful:
+<a href="https://github.com/etsy/statsd-jvm-profiler/">https://github.com/etsy/statsd-jvm-profiler/</a></p>
+<p>It was inspired by <a href="https://github.com/riemann/riemann-jvm-profiler">Kyle Kingsbury's work</a>.</p>
+<p>Twitter is <a href="https://youtu.be/szvHghWyuoQ?t=25m15s">also working on</a>
+tools that might make it into OpenJDK.</p></article>
+ 
+</slide>
+
+<slide  >
+  
+    <hgroup>
+      <h2>Thanks!</h2>
+      <h3></h3>
+    </hgroup>
+    <article ><p>Slides and code published at:</p>
+<p><a href="https://github.com/indyscala/debugging-and-analysis-2015">https://github.com/indyscala/debugging-and-analysis-2015</a></p></article>
+ 
+</slide>
+
+
+<slide class="thank-you-slide segue nobackground">
+  <!-- <aside class="gdbar right"><img src="images/google_developers_icon_128.png"></aside> -->
+  <article class="flexbox vleft auto-fadein">
+    <h2></h2>
+    <p></p>
+  </article>
+  <p data-config-contact class="auto-fadein"></p>
+  </p>
+</slide>
+
+<slide class="backdrop"></slide>
+
+</slides>
+
+<script>
+var _gaq = _gaq || [];
+_gaq.push(['_setAccount', 'UA-XXXXXXXX-1']);
+_gaq.push(['_trackPageview']);
+
+(function() {
+  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+})();
+</script>
+
+<!--[if IE]>
+  <script src="http://ajax.googleapis.com/ajax/libs/chrome-frame/1/CFInstall.min.js"></script>
+  <script>CFInstall.check({mode: 'overlay'});</script>
+<![endif]-->
+</body>
+</html>
